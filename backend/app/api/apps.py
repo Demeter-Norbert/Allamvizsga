@@ -22,7 +22,7 @@ async def start_new_app(request: AppStartRequest):
             status_code=409,
             detail=f"Port {request.target_port} is already in use by another container. Choose a different port."
         )
-    if manager.is_image_existing(request.image):
+    if not manager.is_image_existing(request.image):
         raise HTTPException(
             status_code=404,
             detail=f"Image '{request.image}' not found. Make sure the image exists"
