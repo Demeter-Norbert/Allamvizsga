@@ -1,5 +1,8 @@
 import docker
 from docker.errors import NotFound, APIError
+import re
+
+_ANSI_ESCAPE = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]|\x1b[^[]|\r')
 
 class NodeAppManager:
     MAX_RETRIES = 3
@@ -55,6 +58,7 @@ class NodeAppManager:
                 image=image_name,
                 name=app_name,
                 detach=True, 
+                tty=True,  
                 ports={f"{port}/tcp": port}, 
                 environment=env_vars,
                 labels={"node-manager": "managed", "app-name": app_name}, 
@@ -127,7 +131,7 @@ class NodeAppManager:
         try:
             container = self.client.containers.get(container_id)
             logs_bytes = container.logs(tail=tail, timestamps=True)
-            logs_str = logs_bytes.decode('utf-8')
+            logs_str = _ANSI_ESCAPE.sub('', logs_bytes.decode('utf-8'))
             return logs_str.split('\n')[:-1]
         except docker.errors.NotFound:
             return ["Container not found."]
